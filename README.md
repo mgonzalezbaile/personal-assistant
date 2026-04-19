@@ -18,7 +18,7 @@ Clone, run `./setup.sh`, you're done.
 - [Claude Code](https://claude.com/code) installed (`claude` on PATH)
 - [`gh`](https://cli.github.com) (for cloning + the `daily-briefing` PR-search step)
 - [Bun](https://bun.sh) (only if you enable the Telegram bot)
-- [`gws`](https://googleworkspace-cli.mintlify.app) (only if you enable the `google-workspace-cli` skill)
+- [`gws`](https://googleworkspace-cli.mintlify.app) (only if you enable Google Workspace integration — `setup.sh` walks you through this; you'll also need Node.js + the [`gcloud` SDK](https://cloud.google.com/sdk/docs/install))
 - macOS or Linux. Tested on macOS.
 
 ---
@@ -40,6 +40,7 @@ claude
 | Your email | `{{EMAIL}}` in CLAUDE.md |
 | GitHub username (optional) | PR search in `daily-briefing` |
 | Cursor transcript dir (optional) | `dream` skill (memory consolidation from Cursor sessions) |
+| Google Workspace setup (optional) | Detects Node/`gws`/`gcloud`, prints next steps for `gws auth setup` |
 | Telegram bot setup (optional) | Wires a bot at `~/.claude/channels/telegram-<nick>/` |
 | Wipe template git history (optional) | Fresh `git init` so your assistant's history starts clean |
 

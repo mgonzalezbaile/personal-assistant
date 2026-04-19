@@ -104,7 +104,58 @@ if [[ ! -f .claude/settings.local.json ]]; then
 fi
 mkdir -p .claude/schedules/logs .claude/schedules/.last-run
 
-# ── 6. Telegram bot setup (optional) ─────────────────────────────────────
+# ── 6. Google Workspace integration (optional) ───────────────────────────
+echo
+if confirm "Enable Google Workspace integration (gws CLI — used by daily-briefing and the google-workspace-cli skill)?"; then
+  echo
+  echo "Checklist:"
+
+  if command -v node >/dev/null 2>&1; then
+    echo "  ✓ node found ($(node --version))"
+  else
+    echo "  ✗ node not found. Install Node.js: https://nodejs.org"
+    echo "    (the gws CLI is distributed via npm)"
+  fi
+
+  if command -v gws >/dev/null 2>&1; then
+    echo "  ✓ gws found ($(gws --version 2>/dev/null || echo 'version unknown'))"
+  else
+    echo "  ✗ gws not found. Install with:"
+    echo "      npm install -g @googleworkspace/cli"
+  fi
+
+  if command -v gcloud >/dev/null 2>&1; then
+    echo "  ✓ gcloud found ($(gcloud --version 2>/dev/null | head -1))"
+  else
+    echo "  ✗ gcloud not found. Install the Google Cloud SDK:"
+    echo "      https://cloud.google.com/sdk/docs/install"
+    echo "    Then run 'gcloud auth login' before the next step."
+  fi
+
+  cat <<'EOF'
+
+Once node, gws, and gcloud are all installed (and gcloud is authenticated), run:
+
+  gws auth setup
+
+This is interactive: it creates a Google Cloud project for you, enables the
+Workspace APIs (Gmail, Drive, Calendar, etc), creates an OAuth client, and
+opens your browser to complete login. Takes ~2 minutes.
+
+Manual alternative (if you'd rather not use gws auth setup):
+  - Create your own GCP project at https://console.cloud.google.com
+  - Enable the Workspace APIs you need
+  - Create OAuth 2.0 Desktop client credentials
+  - Save the JSON as ~/.config/gws/client_secret.json
+  - Run: gws auth login
+
+EOF
+else
+  echo "  - skipping Google Workspace setup"
+  echo "    (the daily-briefing skill's calendar step + google-workspace-cli skill won't work until you set this up)"
+fi
+
+# ── 7. Telegram bot setup (optional) ─────────────────────────────────────
 echo
 if confirm "Set up a Telegram bot for this assistant?"; then
   echo
@@ -152,7 +203,7 @@ else
   echo "  - skipping Telegram bot setup (see README for how to add it later)"
 fi
 
-# ── 7. fresh git history (optional) ──────────────────────────────────────
+# ── 8. fresh git history (optional) ──────────────────────────────────────
 echo
 if [[ -d .git ]] && confirm "Wipe template git history and re-init? (recommended for personal projects)"; then
   rm -rf .git
