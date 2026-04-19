@@ -97,11 +97,12 @@ fi
 # Dream transcript dir
 substitute TRANSCRIPT_DIR "$TRANSCRIPT_DIR" ".claude/skills/dream/SKILL.md"
 
-# ── 5. settings.local.json ───────────────────────────────────────────────
+# ── 5. settings.local.json + scheduler dirs ──────────────────────────────
 if [[ ! -f .claude/settings.local.json ]]; then
   cp .claude/settings.local.json.example .claude/settings.local.json
   echo "  - created .claude/settings.local.json from example"
 fi
+mkdir -p .claude/schedules/logs .claude/schedules/.last-run
 
 # ── 6. Telegram bot setup (optional) ─────────────────────────────────────
 echo
