@@ -184,6 +184,67 @@ if confirm "Set up a Telegram bot for this assistant?"; then
 JSON
   fi
 
+  echo
+  echo "Voice-message transcription dependencies (used by the transcribe-voice skill):"
+
+  if command -v ffmpeg >/dev/null 2>&1; then
+    echo "  ✓ ffmpeg found ($(ffmpeg -version 2>/dev/null | head -1 | awk '{print $3}'))"
+  else
+    echo "  ✗ ffmpeg not found. Install with:"
+    echo "      brew install ffmpeg"
+  fi
+
+  if command -v whisper-cli >/dev/null 2>&1; then
+    echo "  ✓ whisper-cli found"
+  else
+    echo "  ✗ whisper-cli not found. Install with:"
+    echo "      brew install whisper-cpp"
+  fi
+
+  # Same search order as transcribe.sh — reuse any existing copy first.
+  WHISPER_MODEL_CANDIDATES=(
+    "$HOME/.cache/whisper/ggml-large-v3-turbo.bin"
+    "$HOME/Library/Application Support/Amical/models/ggml-large-v3-turbo.bin"
+    "$HOME/.local/share/whisper/ggml-large-v3-turbo.bin"
+  )
+  WHISPER_MODEL=""
+  for candidate in "${WHISPER_MODEL_CANDIDATES[@]}"; do
+    if [[ -f "$candidate" ]]; then
+      WHISPER_MODEL="$candidate"
+      break
+    fi
+  done
+
+  if [[ -n "$WHISPER_MODEL" ]]; then
+    echo "  ✓ whisper model found (reusing $WHISPER_MODEL)"
+  else
+    echo "  ✗ whisper model (ggml-large-v3-turbo.bin) not found in any known location."
+    if confirm "    Download it now from Hugging Face (~1.6 GB) into ~/.cache/whisper/?"; then
+      WHISPER_MODEL_DEST="$HOME/.cache/whisper/ggml-large-v3-turbo.bin"
+      mkdir -p "$(dirname "$WHISPER_MODEL_DEST")"
+      WHISPER_MODEL_URL="https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin"
+      if command -v curl >/dev/null 2>&1; then
+        if curl -L --fail --progress-bar -o "$WHISPER_MODEL_DEST" "$WHISPER_MODEL_URL"; then
+          echo "  ✓ model downloaded to $WHISPER_MODEL_DEST"
+        else
+          echo "  ✗ download failed. Retry manually:"
+          echo "      curl -L -o \"$WHISPER_MODEL_DEST\" \"$WHISPER_MODEL_URL\""
+          rm -f "$WHISPER_MODEL_DEST"
+        fi
+      else
+        echo "  ✗ curl not found. Install curl, or download manually:"
+        echo "      $WHISPER_MODEL_URL"
+        echo "    and place it at $WHISPER_MODEL_DEST"
+      fi
+    else
+      echo "    Skipped. To enable voice transcription later, either:"
+      echo "      • download the model:"
+      echo "          curl -L --create-dirs -o ~/.cache/whisper/ggml-large-v3-turbo.bin \\"
+      echo "            https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin"
+      echo "      • or install Amical (https://amical.ai), which ships the same model."
+    fi
+  fi
+
   cat <<EOF
 
 Telegram bot wired up at: $STATE_DIR

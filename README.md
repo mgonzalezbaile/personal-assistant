@@ -19,6 +19,7 @@ Clone, run `./setup.sh`, you're done.
 - [`gh`](https://cli.github.com) (for cloning + the `daily-briefing` PR-search step)
 - [Bun](https://bun.sh) (only if you enable the Telegram bot)
 - [`gws`](https://googleworkspace-cli.mintlify.app) (only if you enable Google Workspace integration — `setup.sh` walks you through this; you'll also need Node.js + the [`gcloud` SDK](https://cloud.google.com/sdk/docs/install))
+- `ffmpeg` + [`whisper-cpp`](https://github.com/ggerganov/whisper.cpp) (only for Telegram voice-note transcription — `brew install ffmpeg whisper-cpp`; `setup.sh` will offer to download the ~1.6 GB Whisper model, or reuse it from an existing [Amical](https://amical.ai) install)
 - macOS or Linux. Tested on macOS.
 
 ---
