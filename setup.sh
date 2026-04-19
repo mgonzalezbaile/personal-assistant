@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+# Personal Assistant template — interactive bootstrap.
+# Run once after `git clone`. Idempotent: re-run to update placeholders.
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+cd "$REPO_ROOT"
+
+# ── helpers ───────────────────────────────────────────────────────────────
+sed_inplace() {
+  # Cross-platform sed -i: macOS needs '' after -i, GNU does not.
+  if [[ "$(uname)" == "Darwin" ]]; then
+    sed -i '' "$@"
+  else
+    sed -i "$@"
+  fi
+}
+
+ask() {
+  local prompt="$1"
+  local default="${2:-}"
+  local var
+  if [[ -n "$default" ]]; then
+    read -r -p "$prompt [$default]: " var
+    echo "${var:-$default}"
+  else
+    read -r -p "$prompt: " var
+    echo "$var"
+  fi
+}
+
+confirm() {
+  local prompt="$1"
+  local default="${2:-n}"
+  local yn
+  read -r -p "$prompt [y/N]: " yn
+  yn="${yn:-$default}"
+  [[ "$yn" =~ ^[Yy]$ ]]
+}
+
+substitute() {
+  # substitute PLACEHOLDER VALUE [files...]
+  local placeholder="$1"; shift
+  local value="$1"; shift
+  # Escape sed metacharacters in value
+  local escaped
+  escaped=$(printf '%s\n' "$value" | sed 's/[\&/]/\\&/g')
+  for file in "$@"; do
+    [[ -f "$file" ]] || continue
+    sed_inplace "s/{{${placeholder}}}/${escaped}/g" "$file"
+  done
+}
+
+# ── 1. identity ──────────────────────────────────────────────────────────
+echo
+echo "Personal Assistant — setup"
+echo "──────────────────────────"
+echo
+
+NAME=$(ask "Your name")
+EMAIL=$(ask "Your email")
+
+# ── 2. GitHub handle (optional) ──────────────────────────────────────────
+GH_HANDLE=$(ask "Your GitHub username (for daily-briefing PR search; leave empty to skip)" "")
+
+# ── 3. transcript dir for dream skill ────────────────────────────────────
+DEFAULT_TRANSCRIPT_DIR="$HOME/.cursor/projects/$(echo "$REPO_ROOT" | sed 's|^/||; s|/|-|g')/agent-transcripts/"
+TRANSCRIPT_DIR=$(ask "Path to Cursor agent-transcripts (used by 'dream' skill)" "$DEFAULT_TRANSCRIPT_DIR")
+
+# ── 4. apply substitutions ───────────────────────────────────────────────
+echo
+echo "Applying placeholders..."
+
+# Files with {{NAME}} / {{EMAIL}}
+NAME_FILES=(
+  "CLAUDE.md"
+  ".claude/commands/wiki-ingest.md"
+  ".claude/commands/weekly-done-cleanup.md"
+  ".claude/skills/wiki/SKILL.md"
+  ".claude/skills/daily-briefing/SKILL.md"
+  ".claude/skills/task-context/SKILL.md"
+)
+substitute NAME "$NAME" "${NAME_FILES[@]}"
+substitute EMAIL "$EMAIL" "CLAUDE.md"
+
+# Today's date in memory/index.md
+substitute DATE "$(date +%Y-%m-%d)" "memory/index.md"
+
+# Daily-briefing GH handle (or strip the section if empty)
+if [[ -n "$GH_HANDLE" ]]; then
+  substitute GH_HANDLE "$GH_HANDLE" ".claude/skills/daily-briefing/SKILL.md"
+else
+  echo "  - no GH handle given; leaving {{GH_HANDLE}} placeholder in daily-briefing/SKILL.md"
+  echo "    (edit manually or remove the PR-search section)"
+fi
+
+# Dream transcript dir
+substitute TRANSCRIPT_DIR "$TRANSCRIPT_DIR" ".claude/skills/dream/SKILL.md"
+
+# ── 5. settings.local.json ───────────────────────────────────────────────
+if [[ ! -f .claude/settings.local.json ]]; then
+  cp .claude/settings.local.json.example .claude/settings.local.json
+  echo "  - created .claude/settings.local.json from example"
+fi
+
+# ── 6. Telegram bot setup (optional) ─────────────────────────────────────
+echo
+if confirm "Set up a Telegram bot for this assistant?"; then
+  echo
+  echo "Steps before continuing:"
+  echo "  1. Open Telegram, message @BotFather, send /newbot"
+  echo "  2. Follow prompts to pick a name + username"
+  echo "  3. Copy the token BotFather returns (looks like 12345:AAH...)"
+  echo
+  read -r -p "Paste the bot token: " BOT_TOKEN
+
+  default_nick="$(basename "$REPO_ROOT")"
+  NICK=$(ask "State-dir nickname (chosen as 'telegram-<nick>')" "$default_nick")
+  STATE_DIR="$HOME/.claude/channels/telegram-$NICK"
+
+  mkdir -p "$STATE_DIR"
+  printf 'TELEGRAM_BOT_TOKEN=%s\n' "$BOT_TOKEN" > "$STATE_DIR/.env"
+  chmod 600 "$STATE_DIR/.env"
+  if [[ ! -f "$STATE_DIR/access.json" ]]; then
+    cat > "$STATE_DIR/access.json" <<'JSON'
+{
+  "dmPolicy": "pairing",
+  "allowFrom": [],
+  "groups": {},
+  "pending": {}
+}
+JSON
+  fi
+
+  cat <<EOF
+
+Telegram bot wired up at: $STATE_DIR
+
+To launch this assistant with the bot, run:
+  cd "$REPO_ROOT" && TELEGRAM_STATE_DIR="$STATE_DIR" \\
+    claude --channels plugin:telegram@claude-plugins-official
+
+Tip: add a shell alias to ~/.zshrc:
+  alias claude-$NICK='cd "$REPO_ROOT" && TELEGRAM_STATE_DIR="$STATE_DIR" claude --channels plugin:telegram@claude-plugins-official'
+
+Then DM your bot, get the 6-char pairing code, and run:
+  /telegram:access pair <code>
+  /telegram:access policy allowlist
+EOF
+else
+  echo "  - skipping Telegram bot setup (see README for how to add it later)"
+fi
+
+# ── 7. fresh git history (optional) ──────────────────────────────────────
+echo
+if [[ -d .git ]] && confirm "Wipe template git history and re-init? (recommended for personal projects)"; then
+  rm -rf .git
+  git init -q
+  git add -A
+  git commit -q -m "Initial commit from personal-assistant template"
+  echo "  - fresh git history initialized"
+fi
+
+# ── done ─────────────────────────────────────────────────────────────────
+cat <<EOF
+
+✓ Setup complete.
+
+Next steps:
+  - Open CLAUDE.md and tweak preferences if you want
+  - Drop notes into sources/ and use /wiki-ingest to build the wiki
+  - Add tasks to TASKS.md
+  - Start a session: claude
+
+For multi-bot setups, see docs/multi-bot-telegram.md
+EOF

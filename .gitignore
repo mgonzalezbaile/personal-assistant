@@ -1,0 +1,19 @@
+# Local Claude config (per-clone, may contain machine-specific paths)
+.claude/settings.local.json
+
+# Scheduler runtime state
+.claude/schedules/logs/
+.claude/schedules/.last-run/
+
+# OS / editor cruft
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Common secret files (defense in depth — secrets should live in ~/.claude/channels/, not here)
+.env
+.env.*
+*.pem
+*.key

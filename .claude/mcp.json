@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "office-powerpoint": {
+      "command": "uvx",
+      "args": ["--from", "office-powerpoint-mcp-server", "ppt_mcp_server"]
+    },
+    "Atlassian-MCP-Server": {
+      "url": "https://mcp.atlassian.com/v1/mcp"
+    }
+  }
+}
