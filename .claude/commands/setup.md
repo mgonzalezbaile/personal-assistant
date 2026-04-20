@@ -131,7 +131,7 @@ Ask: "Wipe template git history and re-init? (recommended unless you're customiz
 Print a final summary block covering:
 
 - How to launch: `make run`
-- How to pair Telegram (if configured): DM the bot, receive 6-char code, run `/telegram:access pair <code>` then `/telegram:access policy allowlist` in the session
+- How to pair Telegram (if configured): DM the bot from your phone to receive a 6-char code, then from a second terminal in the repo run `.claude/scripts/setup/pair-telegram.sh <nick> <code>`. **Do NOT use `/telegram:access pair <code>`** — as of `@claude-plugins-official/telegram@0.0.6` that skill hardcodes the default state dir and ignores `TELEGRAM_STATE_DIR`, so it silently edits the wrong file when a nick is in use. The helper script writes directly to `~/.claude/channels/telegram-<nick>/`.
 - How to test the daily briefing: `ask "what's on my plate today?"`
 - Where to find `docs/multi-bot-telegram.md` if they're running multiple assistants
 
