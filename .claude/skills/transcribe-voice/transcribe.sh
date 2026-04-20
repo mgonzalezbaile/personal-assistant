@@ -11,7 +11,7 @@ WAV="/tmp/telegram_voice_${MSG_ID}.wav"
 
 # Resolve the whisper model. Search known locations in order so we reuse
 # whatever's already on disk (e.g. from a prior Amical install) before
-# falling back to the canonical setup.sh download path.
+# falling back to the canonical download path written by /setup.
 MODEL_CANDIDATES=(
   "$HOME/.cache/whisper/ggml-large-v3-turbo.bin"
   "$HOME/Library/Application Support/Amical/models/ggml-large-v3-turbo.bin"
@@ -31,7 +31,7 @@ if [[ -z "$MODEL" ]]; then
   for candidate in "${MODEL_CANDIDATES[@]}"; do
     echo "  - $candidate" >&2
   done
-  echo "Re-run ./setup.sh and accept the model download, or place the file at the first path." >&2
+  echo "Re-run /setup in this repo and accept the model download, or place the file at the first path." >&2
   exit 1
 fi
 

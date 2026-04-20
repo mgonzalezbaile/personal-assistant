@@ -1,6 +1,9 @@
 # Local Claude config (per-clone, may contain machine-specific paths)
 .claude/settings.local.json
 
+# makefile is generated per-assistant by /setup — template ships without it
+makefile
+
 # Scheduler runtime state
 .claude/schedules/logs/
 .claude/schedules/.last-run/

@@ -9,17 +9,17 @@ A starter project for running [Claude Code](https://claude.com/code) as a long-r
 - **Scheduler** — drop a markdown task into `.claude/schedules/` and it runs on a cron
 - **Telegram-bot–ready** — wire a bot in once and chat with your assistant from your phone
 
-Clone, run `./setup.sh`, you're done.
+Clone, launch Claude, run `/setup`, you're done.
 
 ---
 
 ## Prerequisites
 
-- [Claude Code](https://claude.com/code) installed (`claude` on PATH)
+- [Claude Code](https://claude.com/code) installed (`claude` on PATH) — this drives the setup flow
 - [`gh`](https://cli.github.com) (for cloning + the `daily-briefing` PR-search step)
 - [Bun](https://bun.sh) (only if you enable the Telegram bot)
-- [`gws`](https://googleworkspace-cli.mintlify.app) (only if you enable Google Workspace integration — `setup.sh` walks you through this; you'll also need Node.js + the [`gcloud` SDK](https://cloud.google.com/sdk/docs/install))
-- `ffmpeg` + [`whisper-cpp`](https://github.com/ggerganov/whisper.cpp) (only for Telegram voice-note transcription — `brew install ffmpeg whisper-cpp`; `setup.sh` will offer to download the ~1.6 GB Whisper model, or reuse it from an existing [Amical](https://amical.ai) install)
+- [`gws`](https://googleworkspace-cli.mintlify.app) (only if you enable Google Workspace integration — `/setup` walks you through the OAuth step; you'll also need Node.js + the [`gcloud` SDK](https://cloud.google.com/sdk/docs/install))
+- `ffmpeg` + [`whisper-cpp`](https://github.com/ggerganov/whisper.cpp) (only for Telegram voice-note transcription — `brew install ffmpeg whisper-cpp`; `/setup` will offer to download the ~1.6 GB Whisper model, or reuse it from an existing [Amical](https://amical.ai) install)
 - macOS or Linux. Tested on macOS.
 
 ---
@@ -29,11 +29,16 @@ Clone, run `./setup.sh`, you're done.
 ```sh
 git clone https://github.com/<you>/<your-fork>.git ~/Workspace/my-assistant
 cd ~/Workspace/my-assistant
-./setup.sh
 claude
 ```
 
-`setup.sh` interactively asks for:
+Then in the Claude session:
+
+```
+/setup
+```
+
+`/setup` is an agent-driven command: it interviews you, runs deterministic scripts under [.claude/scripts/setup/](.claude/scripts/setup/) for the mechanical work, and pauses for you to complete interactive steps (OAuth, BotFather) outside the chat. What it asks for:
 
 | Prompt | Used for |
 |---|---|
@@ -41,11 +46,15 @@ claude
 | Your email | `{{EMAIL}}` in CLAUDE.md |
 | GitHub username (optional) | PR search in `daily-briefing` |
 | Cursor transcript dir (optional) | `dream` skill (memory consolidation from Cursor sessions) |
-| Google Workspace setup (optional) | Detects Node/`gws`/`gcloud`, prints next steps for `gws auth setup` |
-| Telegram bot setup (optional) | Wires a bot at `~/.claude/channels/telegram-<nick>/` |
+| Voice transcription deps | Checks for `ffmpeg`, `whisper-cli`, Whisper model; offers to download the model |
+| Google Workspace (optional) | Creates an isolated `~/.config/gws-<nick>/` and walks you through `gws auth setup` against the Google account this assistant should use |
+| GitHub account pin (optional, only if 2+ `gh` accounts) | Bakes `gh auth token --user <chosen>` into the makefile so `daily-briefing` uses the right account |
+| Telegram bot (optional) | Guides you through BotFather, wires token to `~/.claude/channels/telegram-<nick>/` |
 | Wipe template git history (optional) | Fresh `git init` so your assistant's history starts clean |
 
-It's idempotent — re-run anytime to update placeholders.
+At the end `/setup` generates a `makefile` with the right per-assistant env vars. Launch with `make run`.
+
+`/setup` is idempotent — re-run it anytime and it'll detect completed steps and offer to skip or redo each one individually.
 
 ---
 
@@ -62,16 +71,12 @@ After setup:
 
 ## Telegram bot
 
-The Telegram plugin lets you DM your assistant from anywhere. Setup is split between BotFather (Telegram side) and `setup.sh` (local side):
+The Telegram plugin lets you DM your assistant from anywhere. Setup is split between BotFather (Telegram side) and `/setup` (local side):
 
 1. In Telegram, message [@BotFather](https://t.me/BotFather): `/newbot`. Follow the prompts; copy the token it returns.
-2. Run `./setup.sh` (or re-run it) and answer **yes** to "Set up a Telegram bot?". Paste the token.
-3. The script writes the token to `~/.claude/channels/telegram-<nick>/.env` and prints the launch command:
-   ```sh
-   TELEGRAM_STATE_DIR=~/.claude/channels/telegram-<nick> \
-     claude --channels plugin:telegram@claude-plugins-official
-   ```
-4. Once the session is running, DM your bot. It returns a 6-character pairing code. In Claude:
+2. In your Claude session, run `/setup` (or re-run it) and answer **yes** to "Set up a Telegram bot?". Paste the token.
+3. `/setup` writes the token to `~/.claude/channels/telegram-<nick>/.env` and generates a `makefile` with the right `TELEGRAM_STATE_DIR` wired in.
+4. Launch the assistant with `make run`, then DM your bot. It returns a 6-character pairing code. In Claude:
    ```
    /telegram:access pair <code>
    /telegram:access policy allowlist
@@ -91,14 +96,15 @@ For running **multiple assistants** with **separate bots** on the same machine, 
 ├── TASKS.md                     your task list
 ├── memory/index.md              wiki index (catalog of memory/ pages)
 ├── sources/                     drop raw docs here for /wiki-ingest
-├── setup.sh                     interactive bootstrap
+├── makefile                     generated by /setup; runs the assistant via 'make run'
 ├── .claude/
 │   ├── settings.json            project-level Claude Code settings
 │   ├── settings.local.json.example  copy → .local on first setup
 │   ├── mcp.json                 MCP servers (project-scoped)
-│   ├── commands/                slash commands
+│   ├── commands/                slash commands (includes /setup, the bootstrap flow)
 │   ├── skills/                  capability skills
-│   ├── scripts/                 helper shell scripts (used by skills)
+│   ├── scripts/
+│   │   └── setup/               deterministic building blocks invoked by /setup
 │   └── schedules/               drop .md files here for cron-style runs
 └── docs/
     └── multi-bot-telegram.md
@@ -120,6 +126,7 @@ For running **multiple assistants** with **separate bots** on the same machine, 
 
 | Command | Purpose |
 |---|---|
+| `/setup` | One-time agent-driven bootstrap (identity, gws, Telegram, makefile) |
 | `/wiki-ingest` | Process raw docs from `sources/` into wiki pages |
 | `/weekly-done-cleanup` | Archive stale completed tasks |
 | `/ai-podcast` | Generate an audio briefing via NotebookLM |

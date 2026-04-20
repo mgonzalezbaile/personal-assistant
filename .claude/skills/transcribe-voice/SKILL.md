@@ -39,9 +39,9 @@ When a Telegram message arrives with `attachment_kind="voice"` and an
 - Model: Whisper large-v3-turbo (GGML format)
 - Runtime: whisper-cpp (installed via Homebrew: `brew install whisper-cpp ffmpeg`)
 - `transcribe.sh` searches for the model in this order and uses the first hit:
-  1. `~/.cache/whisper/ggml-large-v3-turbo.bin` (canonical, written by `setup.sh`)
+  1. `~/.cache/whisper/ggml-large-v3-turbo.bin` (canonical, written by `/setup`)
   2. `~/Library/Application Support/Amical/models/ggml-large-v3-turbo.bin` (reused if Amical is installed)
   3. `~/.local/share/whisper/ggml-large-v3-turbo.bin`
-- If none exist, run `./setup.sh` and accept the model download (~1.6 GB from Hugging Face).
+- If none exist, run `/setup` in this repo and accept the model download (~1.6 GB from Hugging Face).
 - Transcription takes ~1-2 seconds on M4 Max
 - The model auto-detects language (supports 100 languages)
