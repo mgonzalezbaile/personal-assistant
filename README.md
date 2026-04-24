@@ -1,6 +1,6 @@
-# Personal Assistant — a Claude Code template
+# Personal Assistant — a Claude Code / Cursor template
 
-A starter project for running [Claude Code](https://claude.com/code) as a long-running personal assistant. Ships with:
+A starter project for running a long-running personal assistant on top of [Claude Code](https://claude.com/code) or [Cursor](https://cursor.com) — the templates, skills, and memory layout are agent-agnostic, so use whichever you prefer. Ships with:
 
 - **Task list** (`TASKS.md`) — Eisenhower-classified active / waiting-on / someday / done
 - **Memory wiki** (`memory/`) — interlinked knowledge base maintained by the assistant
@@ -9,7 +9,7 @@ A starter project for running [Claude Code](https://claude.com/code) as a long-r
 - **Scheduler** — drop a markdown task into `.claude/schedules/` and it runs on a cron
 - **Telegram-bot–ready** — wire a bot in once and chat with your assistant from your phone
 
-Clone, launch Claude, run `/setup`, you're done.
+Clone, launch your agent of choice, run the setup flow, you're done.
 
 ---
 
@@ -25,7 +25,7 @@ Two short walkthroughs covering the core use cases — ingesting a meeting trans
 
 ## Prerequisites
 
-- [Claude Code](https://claude.com/code) installed (`claude` on PATH) — this drives the setup flow
+- [Claude Code](https://claude.com/code) (`claude` on PATH) **or** [Cursor](https://cursor.com) — either one drives the setup flow. Claude Code is also required for the scheduler (see below) if you want cron-style runs.
 - [`gh`](https://cli.github.com) (for cloning + the `daily-briefing` PR-search step)
 - [Bun](https://bun.sh) (only if you enable the Telegram bot)
 - [`gws`](https://googleworkspace-cli.mintlify.app) (only if you enable Google Workspace integration — `/setup` walks you through the OAuth step; you'll also need Node.js + the [`gcloud` SDK](https://cloud.google.com/sdk/docs/install))
@@ -36,19 +36,40 @@ Two short walkthroughs covering the core use cases — ingesting a meeting trans
 
 ## Quick start
 
+Clone the template:
+
 ```sh
 git clone https://github.com/<you>/<your-fork>.git ~/Workspace/my-assistant
 cd ~/Workspace/my-assistant
+```
+
+Then pick your agent:
+
+### With Claude Code
+
+```sh
 claude
 ```
 
-Then in the Claude session:
+In the Claude session:
 
 ```
 /setup
 ```
 
-`/setup` is an agent-driven command: it interviews you, runs deterministic scripts under [.claude/scripts/setup/](.claude/scripts/setup/) for the mechanical work, and pauses for you to complete interactive steps (OAuth, BotFather) outside the chat. What it asks for:
+### With Cursor
+
+Open the project in Cursor and start an agent chat. Then send:
+
+```
+/setup
+```
+
+Cursor will read the runbook and walk you through the exact same interview. (The `.claude/commands/` files are just natural-language instructions — nothing in them is Claude-Code-only.)
+
+---
+
+`/setup` (or the Cursor equivalent above) is agent-driven: it interviews you, runs deterministic scripts under [.claude/scripts/setup/](.claude/scripts/setup/) for the mechanical work, and pauses for you to complete interactive steps (OAuth, BotFather) outside the chat. What it asks for:
 
 | Prompt | Used for |
 |---|---|
@@ -84,9 +105,9 @@ After setup:
 The Telegram plugin lets you DM your assistant from anywhere. Setup is split between BotFather (Telegram side) and `/setup` (local side):
 
 1. In Telegram, message [@BotFather](https://t.me/BotFather): `/newbot`. Follow the prompts; copy the token it returns.
-2. In your Claude session, run `/setup` (or re-run it) and answer **yes** to "Set up a Telegram bot?". Paste the token.
+2. In your agent session (Claude Code or Cursor), run the setup flow again and answer **yes** to "Set up a Telegram bot?". Paste the token.
 3. `/setup` writes the token to `~/.claude/channels/telegram-<nick>/.env` and generates a `makefile` with the right `TELEGRAM_STATE_DIR` wired in.
-4. Launch the assistant with `make run`, then DM your bot. It returns a 6-character pairing code. In Claude:
+4. Launch the assistant with `make run`, then DM your bot. It returns a 6-character pairing code. In your agent session:
    ```
    /telegram:access pair <code>
    /telegram:access policy allowlist
