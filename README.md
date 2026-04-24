@@ -13,6 +13,16 @@ Clone, launch Claude, run `/setup`, you're done.
 
 ---
 
+## Demos
+
+Two short walkthroughs covering the core use cases — ingesting a meeting transcript into the memory wiki, building a daily briefing from GitHub and Google Calendar, and creating tasks that pull context from existing memories.
+
+|  |  |
+|:---:|:---:|
+| [![Demo 1](https://img.youtube.com/vi/hw3QfQ75yc0/hqdefault.jpg)](https://www.youtube.com/watch?v=hw3QfQ75yc0) | [![Demo 2](https://img.youtube.com/vi/h1O2-p98OXQ/hqdefault.jpg)](https://www.youtube.com/watch?v=h1O2-p98OXQ) |
+
+---
+
 ## Prerequisites
 
 - [Claude Code](https://claude.com/code) installed (`claude` on PATH) — this drives the setup flow
