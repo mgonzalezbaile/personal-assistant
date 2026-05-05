@@ -18,7 +18,7 @@ if [[ ! -d "$CONFIG_DIR" ]]; then
   exit 1
 fi
 
-STATUS_JSON=$(GOOGLE_WORKSPACE_CLI_CONFIG_DIR="$CONFIG_DIR" gws auth status --format=json 2>&1) || {
+STATUS_JSON=$(GOOGLE_WORKSPACE_CLI_CONFIG_DIR="$CONFIG_DIR" gws auth status 2>&1) || {
   echo "ERROR: gws auth status failed for $CONFIG_DIR" >&2
   echo "$STATUS_JSON" >&2
   exit 1

@@ -21,7 +21,7 @@ ready: $CONFIG_DIR
 
 Run this in a separate terminal to complete OAuth against the Google account you want this assistant to use:
 
-  GOOGLE_WORKSPACE_CLI_CONFIG_DIR=$CONFIG_DIR gws auth setup
+  GOOGLE_WORKSPACE_CLI_CONFIG_DIR=$CONFIG_DIR gws auth setup --login
 
 It opens a browser. Sign in with the correct Google account. When it finishes, come back here and confirm.
 EOF
